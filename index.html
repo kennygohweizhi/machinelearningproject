@@ -69,9 +69,10 @@ procSubmission = procSubmission[,-nearZeroCol]
 
 <br><p><strong> Creating covariates: descriptive variables</strong><br><br>
 Lastly, we drop the first six variables which are descriptive variables 
-procTraining = procTraining[, -c(1:6)]
+<pre><code>procTraining = procTraining[, -c(1:6)]
 procTesting = procTesting[, -c(1:6)]
 procSubmission = procSubmission[, -c(1:6)]</p>
+</code></pre>
 
 <br><p><strong> Dimension reduction using PCA </strong><br><br>
 <pre><code>dim(procTraining)
