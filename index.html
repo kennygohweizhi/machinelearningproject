@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Machinelearningproject by kennygohweizhi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Machinelearningproject</h1>
+      <h2 class="project-tagline"></h2>
+      <a href="https://github.com/kennygohweizhi/machinelearningproject" class="btn">View on GitHub</a>
+      <a href="https://github.com/kennygohweizhi/machinelearningproject/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/kennygohweizhi/machinelearningproject/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <p><strong>Background</strong>
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset).</p>
+
+<p>*<em>Data *</em>
+The training data for this project are available here: 
+<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a></p>
+
+<p>The test data are available here: 
+<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a></p>
+
+<p>The data for this project come from this source: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a>. </p>
+
+<p>We first read the two datasets:</p>
+
+<pre><code>submission = read.csv("pml-testing.csv")
+train = read.csv("pml-training.csv")
+</code></pre>
+
+<p>** Partitioning the training set**
+We separate the training set into a training and testing set, to validate the model</p>
+
+<pre><code>set.seed(3333)
+sampling = createDataPartition(train$classe, p = 0.8, list=F)
+training = train[sampling,]
+testing = train[-sampling,]
+dim(training); dim(testing)
+</code></pre>
+
+<p>We have 15,699 observations in the training set, and 3,923 in the testing set. There are 160 variables.</p>
+
+<p>** Creating covariates: NA terms **
+First, we remove variables where NAs comprise over half of its observations</p>
+
+<pre><code>rmNA = which(apply(training, 2, function(x) sum(is.na(x)))&gt; nrow(training)/2)
+procTraining = training[,-rmNA]
+procTesting = testing[,-rmNA]
+procSubmission = submission[,-rmNA]
+</code></pre>
+
+<p>** Creating covariates: near zero variance terms**
+Second, we exclude variables which have near zero variance</p>
+
+<pre><code>nearZeroCol = nearZeroVar(procTraining)
+procTraining = procTraining[,-nearZeroCol]
+procTesting = procTesting[,-nearZeroCol]
+procSubmission = procSubmission[,-nearZeroCol]
+</code></pre>
+
+<p>** Creating covariates: descriptive variables**
+Lastly, we drop the first six variables which are descriptive variables 
+procTraining = procTraining[, -c(1:6)]
+procTesting = procTesting[, -c(1:6)]
+procSubmission = procSubmission[, -c(1:6)]</p>
+
+<p>** Dimension reduction using PCA **</p>
+
+<pre><code>dim(procTraining)
+</code></pre>
+
+<p>We still have 53 variables, which will take some time to process. Hence, we reduce the number of covariates using PCA. </p>
+
+<pre><code>pca = preProcess(procTraining[,-53], method="pca", thresh=0.9)
+pca
+</code></pre>
+
+<p>We now have 18 predictors</p>
+
+<p>** Model fitting **
+We will use random forest.</p>
+
+<pre><code>modelTREE = train(procTraining$classe~., data=pcatraining, method="rf")
+</code></pre>
+
+<p>*** Out of sample accuracy ***
+Test the model on the testing dataset.</p>
+
+<pre><code>confusionMatrix(predict(modelTREE, pcatesting), procTesting$classe)
+</code></pre>
+
+<p>The results are shown below. We have achieved an accuracy rate of 97.99%.</p>
+
+<pre><code>Confusion Matrix and Statistics
+          Reference
+Prediction    A    B    C    D    E
+         A 1104   11    1    2    0
+         B    7  733    7    0    1
+         C    3   14  665   12    3
+         D    2    0   11  628    3
+         E    0    1    0    1  714
+
+Overall Statistics                                      
+               Accuracy : 0.9799        
+                 95% CI : (0.975, 0.984)
+    No Information Rate : 0.2845        
+    P-Value [Acc &gt; NIR] : &lt; 2.2e-16     
+
+                  Kappa : 0.9745        
+ Mcnemar's Test P-Value : NA            
+
+Statistics by Class:
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            0.9892   0.9657   0.9722   0.9767   0.9903
+Specificity            0.9950   0.9953   0.9901   0.9951   0.9994
+Pos Pred Value         0.9875   0.9799   0.9541   0.9752   0.9972
+Neg Pred Value         0.9957   0.9918   0.9941   0.9954   0.9978
+Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+Detection Rate         0.2814   0.1868   0.1695   0.1601   0.1820
+Detection Prevalence   0.2850   0.1907   0.1777   0.1642   0.1825
+Balanced Accuracy      0.9921   0.9805   0.9812   0.9859   0.9948
+</code></pre>
+
+<p>*** Predicting on the test data, for project submission ***
+Predicting on the test data:</p>
+
+<pre><code>predsubmission = predict(modelTREE, pcasubmission)
+</code></pre>
+
+<p>We obtain the answers</p>
+
+<pre><code> [1] B A B A A E D B A A B C B A E E A B B B
+Levels: A B C D E
+</code></pre>
+
+<p>Lastly, we output the results:</p>
+
+<pre><code>output = as.character(predsubmission)
+
+pml_write_files = function(x) {
+    n = length(x)
+    for (i in 1:n) {
+        filename = paste0("problem_id_", i, ".txt")
+        write.table(x[i], file = filename, quote = FALSE, row.names = FALSE, 
+            col.names = FALSE)
+    }
+}
+
+pml_write_files(output)
+</code></pre>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/kennygohweizhi/machinelearningproject">Machinelearningproject</a> is maintained by <a href="https://github.com/kennygohweizhi">kennygohweizhi</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
