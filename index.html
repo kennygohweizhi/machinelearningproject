@@ -22,7 +22,7 @@
       <p><strong>Background</strong>
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset).</p>
 
-<p>*<em>Data *</em>
+<p><strong>Data</strong>
 The training data for this project are available here: 
 <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a></p>
 
@@ -37,7 +37,7 @@ The training data for this project are available here:
 train = read.csv("pml-training.csv")
 </code></pre>
 
-<p>** Partitioning the training set**
+<p><strong>Partitioning the training set</strong>
 We separate the training set into a training and testing set, to validate the model</p>
 
 <pre><code>set.seed(3333)
@@ -49,7 +49,7 @@ dim(training); dim(testing)
 
 <p>We have 15,699 observations in the training set, and 3,923 in the testing set. There are 160 variables.</p>
 
-<p>** Creating covariates: NA terms **
+<p><strong>Creating covariates: NA terms</strong>
 First, we remove variables where NAs comprise over half of its observations</p>
 
 <pre><code>rmNA = which(apply(training, 2, function(x) sum(is.na(x)))&gt; nrow(training)/2)
@@ -58,7 +58,7 @@ procTesting = testing[,-rmNA]
 procSubmission = submission[,-rmNA]
 </code></pre>
 
-<p>** Creating covariates: near zero variance terms**
+<p><strong> Creating covariates: near zero variance terms</strong>
 Second, we exclude variables which have near zero variance</p>
 
 <pre><code>nearZeroCol = nearZeroVar(procTraining)
@@ -67,16 +67,15 @@ procTesting = procTesting[,-nearZeroCol]
 procSubmission = procSubmission[,-nearZeroCol]
 </code></pre>
 
-<p>** Creating covariates: descriptive variables**
+<p><strong> Creating covariates: descriptive variables</strong>
 Lastly, we drop the first six variables which are descriptive variables 
 procTraining = procTraining[, -c(1:6)]
 procTesting = procTesting[, -c(1:6)]
 procSubmission = procSubmission[, -c(1:6)]</p>
 
-<p>** Dimension reduction using PCA **</p>
-
+<p><strong> Dimension reduction using PCA </strong>
 <pre><code>dim(procTraining)
-</code></pre>
+</code></pre></p>
 
 <p>We still have 53 variables, which will take some time to process. Hence, we reduce the number of covariates using PCA. </p>
 
@@ -86,13 +85,13 @@ pca
 
 <p>We now have 18 predictors</p>
 
-<p>** Model fitting **
+<p><strong> Model fitting </strong>
 We will use random forest.</p>
 
 <pre><code>modelTREE = train(procTraining$classe~., data=pcatraining, method="rf")
 </code></pre>
 
-<p>*** Out of sample accuracy ***
+<p><strong> Out of sample accuracy </strong>
 Test the model on the testing dataset.</p>
 
 <pre><code>confusionMatrix(predict(modelTREE, pcatesting), procTesting$classe)
@@ -130,7 +129,7 @@ Detection Prevalence   0.2850   0.1907   0.1777   0.1642   0.1825
 Balanced Accuracy      0.9921   0.9805   0.9812   0.9859   0.9948
 </code></pre>
 
-<p>*** Predicting on the test data, for project submission ***
+<p><strong>Predicting on the test data, for project submission </strong>
 Predicting on the test data:</p>
 
 <pre><code>predsubmission = predict(modelTREE, pcasubmission)
